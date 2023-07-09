@@ -80,7 +80,6 @@ namespace XMLParser.Pages
             }
             return (htmlUrls, title, xmlUrls);
         }
-
     }
 }
 
