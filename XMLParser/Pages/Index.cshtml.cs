@@ -32,56 +32,55 @@ namespace XMLParser.Pages
             }
             XmlDocument xmlDoc = new XmlDocument();
             var client = _httpClientFactory.CreateClient();
-            HttpResponseMessage xmlResponse = await GetOutline(client, "https://blue.feedland.org/opml?screenname=dave");
-            if (xmlResponse.IsSuccessStatusCode)
+            (HtmlUrls, FeedTitles, XmlUrls) = await GetOutline(client, "https://blue.feedland.org/opml?screenname=dave");
+            var paginatedXMLURLs = XmlUrls.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
+            FeedTitles = FeedTitles.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
+            HtmlUrls = HtmlUrls.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
+            foreach (var url in paginatedXMLURLs)
             {
-                var paginatedXMLURLs = XmlUrls.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
-                FeedTitles = FeedTitles.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
-                HtmlUrls = HtmlUrls.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
-                foreach (var url in paginatedXMLURLs)
-                {
-                    List<ItemProperties> ItemsProperties = new List<ItemProperties>();
-                    HttpResponseMessage response = await client.GetAsync(url);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        string content = await response.Content.ReadAsStringAsync();
-                        xmlDoc.LoadXml(content);
-                        foreach (var node in xmlDoc.SelectNodes("rss/channel/item").Cast<XmlNode>())
-                        {
-                            ItemProperties item = new ItemProperties();
-                            if (node.SelectSingleNode("title") is not null)
-                            {
-                                item.Title = node.SelectSingleNode("title").InnerText;
-                            }
-                            item.Description = node.SelectSingleNode("description").InnerText;
-                            item.PubDate = node.SelectSingleNode("pubDate").InnerText;
-                            item.Link = node.SelectSingleNode("link").InnerText;
-                            item.Guid = node.SelectSingleNode("guid").InnerText;
-                            ItemsProperties.Add(item);
-                        }
-                        RssItems.Add(ItemsProperties);
-                    }
-                }
+               List<ItemProperties> ItemsProperties = new List<ItemProperties>();
+               HttpResponseMessage response = await client.GetAsync(url);
+               if (response.IsSuccessStatusCode)
+               {
+                   string content = await response.Content.ReadAsStringAsync();
+                   xmlDoc.LoadXml(content);
+                   foreach (var node in xmlDoc.SelectNodes("rss/channel/item").Cast<XmlNode>())
+                   {
+                       ItemProperties item = new ItemProperties();
+                       if (node.SelectSingleNode("title") is not null)
+                       {
+                           item.Title = node.SelectSingleNode("title").InnerText;
+                       }
+                       item.Description = node.SelectSingleNode("description").InnerText;
+                       item.PubDate = node.SelectSingleNode("pubDate").InnerText;
+                       item.Link = node.SelectSingleNode("link").InnerText;
+                       item.Guid = node.SelectSingleNode("guid").InnerText;
+                       ItemsProperties.Add(item);
+                   }
+                   RssItems.Add(ItemsProperties);
+               }
             }
         }
+        
 
 
-        async Task<HttpResponseMessage> GetOutline(HttpClient client, string url)
+        async Task<(List<string>, List<string>, List<string>)> GetOutline(HttpClient client, string url)
         {
             HttpResponseMessage response = await client.GetAsync(url);
+            List<string> htmlUrls = new List<string>();
+            List<string> title = new List<string>();
+            List<string> xmlUrls = new List<string>();
             if (response.IsSuccessStatusCode)
             {
                 string content = await response.Content.ReadAsStringAsync();
                 XDocument doc = XDocument.Parse(content);
-                var urls = doc.Descendants("outline").Select(x => x.Attribute("xmlUrl").Value).ToList();
-                var title = doc.Descendants("outline").Select(x => x.Attribute("text").Value).ToList();
-                var html = doc.Descendants("outline").Select(x => x.Attribute("htmlUrl").Value).ToList();
-                XmlUrls.AddRange(urls);
-                FeedTitles.AddRange(title);
-                HtmlUrls.AddRange(html);
+                htmlUrls = doc.Descendants("outline").Select(x => x.Attribute("htmlUrl").Value).ToList();
+                title = doc.Descendants("outline").Select(x => x.Attribute("text").Value).ToList();
+                xmlUrls = doc.Descendants("outline").Select(x => x.Attribute("xmlUrl").Value).ToList();
             }
-            return response;
+            return (htmlUrls, title, xmlUrls);
         }
+
     }
 }
 
