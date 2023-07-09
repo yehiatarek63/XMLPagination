@@ -33,10 +33,10 @@ namespace XMLParser.Pages
             XmlDocument xmlDoc = new XmlDocument();
             var client = _httpClientFactory.CreateClient();
             (HtmlUrls, FeedTitles, XmlUrls) = await GetOutline(client, "https://blue.feedland.org/opml?screenname=dave");
-            var paginatedXMLURLs = XmlUrls.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
+            var paginatedXmlUrls = XmlUrls.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
             FeedTitles = FeedTitles.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
             HtmlUrls = HtmlUrls.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
-            foreach (var url in paginatedXMLURLs)
+            foreach (var url in paginatedXmlUrls)
             {
                List<ItemProperties> ItemsProperties = new List<ItemProperties>();
                HttpResponseMessage response = await client.GetAsync(url);
