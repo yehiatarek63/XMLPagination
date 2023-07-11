@@ -20,6 +20,7 @@ public class IndexModel : PageModel
     public List<string> XmlUrls { get; set; } = new List<string>();
     public List<string> HtmlUrls { get; set; } = new List<string>();
     public int TotalPages { get; set; } = 0;
+    
     public IndexModel(IHttpClientFactory httpClientFactory)
     {
         _httpClientFactory = httpClientFactory;
@@ -39,6 +40,7 @@ public class IndexModel : PageModel
         FeedTitles = FeedTitles.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
         HtmlUrls = HtmlUrls.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
     }
+    
     public IActionResult OnPostStar(string xmlUrl, string htmlUrl, string feedTitle, int pageIndex)
     {
         string currentValue = Request.Cookies["XmlUrl"];
@@ -108,8 +110,6 @@ public class IndexModel : PageModel
         }
         return RedirectToPage("Index", new {PageIndex = pageIndex});
     }
-
-
 
     async Task<(List<string>, List<string>, List<string>)> GetOutline(HttpClient client, string url)
     {
