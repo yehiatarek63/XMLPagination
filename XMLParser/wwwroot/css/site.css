@@ -35,6 +35,15 @@ body {
     width: 100%;
 }
 
+.buttons{
+    display: flex;
+    justify-content: space-between;
+}
+
+.checked {
+    color: orange;
+}
+
 
 section a{
     width: 11%;

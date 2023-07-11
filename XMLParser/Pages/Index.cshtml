@@ -6,34 +6,49 @@
 
 <div class="text-center">
     @{
-        @for (int i = 0; i < Model.RssItems.Count; i++)
+        for(int i = 0; i < Model.FeedTitles.Count; i++)
         {
-            var feedTitle = Model.FeedTitles[i];
-            var htmlUrl = Model.HtmlUrls[i];
-            <h1>@feedTitle</h1>
-            <div class="ml-auto">
-                <a class="btn btn-success" href="@htmlUrl">Go to site</a>
-            </div>
-            foreach (var item in Model.RssItems[i])
-            {
-                <section class="item p-3">
-                    <h1 class="item-date">@item.PubDate</h1>
-                    @if (!string.IsNullOrEmpty(item.Title))
-                    {
-                        <h2>@item.Title</h2>
+            <section class="item p-3">
+                <h1 class="item-date">@Model.FeedTitles[i]</h1>
+                <div class="buttons">
+                    <a class="btn btn-success" asp-page="Feed" asp-route-xmlUrl="@Model.XmlUrls[i]">Feed Info</a>
+                    <a class="btn btn-primary" href="@Model.HtmlUrls[i]">Original Site</a>
+                    @{
+                        if (Request.Cookies["XmlUrl"] is not null)
+                        {
+                            List<string> xmlUrlList = Request.Cookies["XmlUrl"].Split(',').ToList();
+                            string xmlUrl = xmlUrlList.Find(url => url == Model.XmlUrls[i]);
+                            if(xmlUrl is null)
+                            {
+                                <form method="post">
+                                    <button type="submit" class="btn btn-warning" asp-page-handler="Star" asp-route-xmlUrl="@Model.XmlUrls[i]" asp-route-htmlUrl="@Model.HtmlUrls[i]" asp-route-feedTitle="@Model.FeedTitles[i]" asp-route-pageIndex="@Model.PageIndex">Star</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form method="post">
+                                    <button type="submit" class="btn btn-danger" asp-page-handler="DeleteStar" asp-route-xmlUrl="@Model.XmlUrls[i]" asp-route-htmlUrl="@Model.HtmlUrls[i]" asp-route-feedTitle="@Model.FeedTitles[i]" asp-route-pageIndex="@Model.PageIndex">Unstar</button>
+                                </form>
+                            }
+                        }
+                        else
+                        {
+                            <form method="post">
+                                <button type="submit" class="btn btn-warning" asp-page-handler="Star" asp-route-xmlUrl="@Model.XmlUrls[i]" asp-route-htmlUrl="@Model.HtmlUrls[i]" asp-route-feedTitle="@Model.FeedTitles[i]" asp-route-pageIndex="@Model.PageIndex">Star</button>
+                            </form>
+                        }
                     }
-                    <p class="item-description">@Html.Raw(@item.Description)</p>
-                    <a class="btn btn-primary d-flex justify-content-sm-start" href="@item.Link">Original article</a>
-                </section>
-            }
+                    
+                    
+                </div>
+            </section>
         }
-
         <nav aria-label="navigation-links">
             <ul class="pagination">
                 <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
                     <a class="page-link" href="@Url.Page("Index", new {pageIndex = Model.PageIndex - 1 })">Previous</a>
                 </li>
-                @for (int i = 1; i <= Math.Ceiling((double)Model.XmlUrls.Count/Model.PageSize); i++)
+                @for (int i = 1; i <= Model.TotalPages; i++)
                 {
                     <li class="page-item @(Model.PageIndex == i ? "active" : "")">
                         <a class="page-link" href="@Url.Page("Index", new { pageIndex = i })">@i</a>
@@ -47,5 +62,4 @@
      }
       
 </div>
-
 

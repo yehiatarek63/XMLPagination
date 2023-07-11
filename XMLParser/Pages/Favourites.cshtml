@@ -1,0 +1,19 @@
+﻿@page
+@model XMLParser.Pages.FavouritesModel
+@{
+
+    for (int i = 0; i < Model.FeedTitles.Count; i++)
+    {
+        <section class="item p-3">
+            <h1 class="item-date">@Model.FeedTitles[i]</h1>
+            <div class="buttons">
+                <a class="btn btn-success" asp-page="Feed" asp-route-xmlUrl="@Model.XmlUrls[i]">Feed Info</a>
+                <a class="btn btn-primary" href="@Model.HtmlUrls[i]">Original Site</a>
+                <form method="post">
+                    <button type="submit" class="btn btn-danger" asp-page-handler="DeleteStar" asp-route-xmlUrl="@Model.XmlUrls[i]" asp-route-htmlUrl="@Model.HtmlUrls[i]" asp-route-feedTitle="@Model.FeedTitles[i]">Unstar</button>
+                </form>
+            </div>
+        </section>
+    }
+
+}

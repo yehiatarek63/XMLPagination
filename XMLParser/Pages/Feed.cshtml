@@ -1,0 +1,17 @@
+﻿@page
+@model XMLParser.Pages.FeedModel
+@{
+
+    foreach (var item in Model.FeedData)
+    {
+        <section class="item p-3">
+            <h1 class="item-date">@item.PubDate</h1>
+            @if (!string.IsNullOrEmpty(item.Title))
+            {
+                <h2>@item.Title</h2>
+            }
+            <p class="item-description">@Html.Raw(@item.Description)</p>
+            <a class="btn btn-primary d-flex justify-content-sm-start" href="@item.Link">Original article</a>
+        </section>
+    }
+}
