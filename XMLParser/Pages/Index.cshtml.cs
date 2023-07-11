@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Reflection;
 using System.Security;
@@ -27,7 +27,7 @@ public class IndexModel : PageModel
 
     public async Task OnGet(int? pageIndex)
     {
-        if (pageIndex is not null)
+        if(pageIndex is not null)
         {
             PageIndex = (int)pageIndex;
         }
