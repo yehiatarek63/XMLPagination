@@ -11,10 +11,12 @@ public class FavouritesModel : PageModel
     public List<string> HtmlUrls { get; set; } = new List<string>();
     public List<string> FeedTitles { get; set; } = new List<string>();
     private readonly IHttpClientFactory _httpClientFactory;
+    
     public FavouritesModel(IHttpClientFactory httpClientFactory)
     {
         _httpClientFactory = httpClientFactory;
     }
+    
     public void OnGet()
     {
         if (Request.Cookies["XmlUrl"] is not null && Request.Cookies["HtmlUrl"] is not null && Request.Cookies["FeedTitle"] is not null)
