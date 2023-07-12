@@ -1,4 +1,5 @@
 ﻿@page
+@using System.Text.Json;
 @model IndexModel
 @{
     ViewData["Title"] = "Home page";
@@ -14,11 +15,11 @@
                     <a class="btn btn-success" asp-page="Feed" asp-route-xmlUrl="@Model.XmlUrls[i]">Feed Info</a>
                     <a class="btn btn-primary" href="@Model.HtmlUrls[i]">Original Site</a>
                     @{
-                        if (Request.Cookies["XmlUrl"] is not null)
+                        if (Request.Cookies["Favourites"] is not null)
                         {
-                            List<string> xmlUrlList = Request.Cookies["XmlUrl"].Split(',').ToList();
-                            string xmlUrl = xmlUrlList.Find(url => url == Model.XmlUrls[i]);
-                            if(xmlUrl is null)
+                            List<Feed> currentFavourites = JsonSerializer.Deserialize<List<Feed>>(Request.Cookies["Favourites"]);
+                            Feed currentFeed = currentFavourites.Find(x => x.XmlUrl == Model.XmlUrls[i] && x.HtmlUrl == Model.HtmlUrls[i] && x.FeedTitle == Model.FeedTitles[i]);
+                            if(currentFeed is null)
                             {
                                 <form method="post">
                                     <button type="submit" class="btn btn-warning" asp-page-handler="Star" asp-route-xmlUrl="@Model.XmlUrls[i]" asp-route-htmlUrl="@Model.HtmlUrls[i]" asp-route-feedTitle="@Model.FeedTitles[i]" asp-route-pageIndex="@Model.PageIndex">Star</button>

@@ -8,7 +8,7 @@ namespace XMLParser.Pages;
 public class FeedModel : PageModel
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    public List<FeedItem> FeedData { get; set; } = new List<FeedItem>();
+    public List<FeedItem> FeedData { get; set; } = new();
     public FeedModel(IHttpClientFactory httpClientFactory)
     {
         _httpClientFactory = httpClientFactory;

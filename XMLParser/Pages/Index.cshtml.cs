@@ -5,6 +5,7 @@ using System.Security;
 using System.Xml;
 using System.Xml.Serialization;
 using System.Xml.Linq;
+using System.Text.Json;
 using System.Net.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -14,11 +15,11 @@ namespace XMLParser.Pages;
 public class IndexModel : PageModel
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    public int PageIndex { get; set; } = 1;
+    public int PageIndex { get; set; } = 0;
     public int PageSize { get; set; } = 5;
-    public List<string> FeedTitles { get; set; } = new List<string>();
-    public List<string> XmlUrls { get; set; } = new List<string>();
-    public List<string> HtmlUrls { get; set; } = new List<string>();
+    public List<string> FeedTitles { get; set; } = new();
+    public List<string> XmlUrls { get; set; } = new();
+    public List<string> HtmlUrls { get; set; } = new();
     public int TotalPages { get; set; } = 0;
     
     public IndexModel(IHttpClientFactory httpClientFactory)
@@ -32,6 +33,10 @@ public class IndexModel : PageModel
         {
             PageIndex = (int)pageIndex;
         }
+        else
+        {
+            PageIndex = 1;
+        }
         XmlDocument xmlDoc = new XmlDocument();
         var client = _httpClientFactory.CreateClient();
         (HtmlUrls, FeedTitles, XmlUrls) = await GetOutline(client, "https://blue.feedland.org/opml?screenname=dave");
@@ -43,69 +48,39 @@ public class IndexModel : PageModel
     
     public IActionResult OnPostStar(string xmlUrl, string htmlUrl, string feedTitle, int pageIndex)
     {
-        string currentValue = Request.Cookies["XmlUrl"];
-        if (currentValue is not null)
+        if (Request.Cookies["Favourites"] is null)
         {
-            currentValue += "," + xmlUrl;
+            Response.Cookies.Append("Favourites", JsonSerializer.Serialize(new List<Feed> { new Feed { XmlUrl = xmlUrl, HtmlUrl = htmlUrl, FeedTitle = feedTitle } }), new CookieOptions
+            {
+                Secure = true,
+            });
+            return RedirectToPage("Index", new { PageIndex = pageIndex });
         }
-        else
+        List<Feed> currentFavourites = JsonSerializer.Deserialize<List<Feed>>(Request.Cookies["Favourites"]);
+        Feed newFeed = new Feed
         {
-            currentValue = xmlUrl;
-        }
-        Response.Cookies.Append("XmlUrl", currentValue, new CookieOptions
+            XmlUrl = xmlUrl,
+            HtmlUrl = htmlUrl,
+            FeedTitle = feedTitle
+        };
+        currentFavourites.Add(newFeed);
+        Response.Cookies.Append("Favourites", JsonSerializer.Serialize(currentFavourites), new CookieOptions
         {
             Secure = true,
-        });
-        string currentFeedTitle = Request.Cookies["FeedTitle"];
-        if (currentFeedTitle is not null)
-        {
-            currentFeedTitle += "," + feedTitle;
-        }
-        else
-        {
-            currentFeedTitle = feedTitle;
-        }
-        Response.Cookies.Append("FeedTitle", currentFeedTitle, new CookieOptions
-        {
-            Secure = true,
-        });
-        string currentHtmlUrl = Request.Cookies["HtmlUrl"];
-        if (currentHtmlUrl is not null)
-        {
-            currentHtmlUrl += "," + htmlUrl;
-        }
-        else
-        {
-            currentHtmlUrl = htmlUrl;
-        }
-        Response.Cookies.Append("HtmlUrl", currentHtmlUrl, new CookieOptions
-        {
-            Secure = true
         });
         return RedirectToPage("Index", new { PageIndex = pageIndex });
     }
 
     public IActionResult OnPostDeleteStar(string xmlUrl, string htmlUrl, string feedTitle, int pageIndex)
     {
-        if (Request.Cookies["XmlUrl"] is not null && Request.Cookies["HtmlUrl"] is not null && Request.Cookies["FeedTitle"] is not null)
+        List<Feed> currentFavourites = JsonSerializer.Deserialize<List<Feed>>(Request.Cookies["Favourites"]);
+        Feed currentFeed = currentFavourites.Find(x => x.XmlUrl == xmlUrl && x.HtmlUrl == htmlUrl && x.FeedTitle == feedTitle);
+        if(currentFeed is not null)
         {
-            List<string> xmlUrlList = Request.Cookies["XmlUrl"].Split(',').ToList();
-            List<string> htmlUrlList = Request.Cookies["HtmlUrl"].Split(',').ToList();
-            List<string> feedTitleList = Request.Cookies["FeedTitle"].Split(',').ToList();
-            xmlUrlList.Remove(xmlUrl);
-            htmlUrlList.Remove(htmlUrl);
-            feedTitleList.Remove(feedTitle);
-            Response.Cookies.Append("XmlUrl", string.Join(",", xmlUrlList), new CookieOptions
+            currentFavourites.Remove(currentFeed);
+            Response.Cookies.Append("Favourites", JsonSerializer.Serialize(currentFavourites), new CookieOptions
             {
-                Secure = true
-            });
-            Response.Cookies.Append("HtmlUrl", string.Join(",", htmlUrlList), new CookieOptions
-            {
-                Secure = true
-            });
-            Response.Cookies.Append("FeedTitle", string.Join(",", feedTitleList), new CookieOptions
-            {
-                Secure = true
+                Secure = true,
             });
         }
         return RedirectToPage("Index", new {PageIndex = pageIndex});
@@ -129,6 +104,12 @@ public class IndexModel : PageModel
     }
 }
 
+public class Feed
+{
+    public string XmlUrl { get; set; }
+    public string HtmlUrl { get; set; }
+    public string FeedTitle { get; set; }
+}
     
 
 
