@@ -1,4 +1,4 @@
-# Favourites demo
+# Favourites demo (without reloading)
 
 
 
