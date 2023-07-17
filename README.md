@@ -1,7 +1,11 @@
 # Favourites demo
 
 
-https://github.com/yehiatarek63/XMLPagination/assets/94568731/a20caa5d-6b9f-4359-874f-4cc09c609b0f
+
+
+
+https://github.com/yehiatarek63/XMLPagination/assets/94568731/268671f7-66bf-44b2-a893-2985acd8c36a
+
 
 
 # XMLPagination
