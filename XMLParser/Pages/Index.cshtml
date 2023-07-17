@@ -4,63 +4,134 @@
 @{
     ViewData["Title"] = "Home page";
 }
-
+@Html.AntiForgeryToken()
 <div class="text-center">
     @{
         for(int i = 0; i < Model.FeedTitles.Count; i++)
         {
-            <section class="item p-3">
-                <h1 class="item-date">@Model.FeedTitles[i]</h1>
-                <div class="buttons">
-                    <a class="btn btn-success" asp-page="Feed" asp-route-xmlUrl="@Model.XmlUrls[i]">Feed Info</a>
-                    <a class="btn btn-primary" href="@Model.HtmlUrls[i]">Original Site</a>
-                    @{
+                    <section class="item p-3">
+                        <h1 class="item-date">@Model.FeedTitles[i]</h1>
+                        <div class="buttons">
+                            <a class="btn btn-success" asp-page="Feed" asp-route-xmlUrl="@Model.XmlUrls[i]">Feed Info</a>
+                            <a class="btn btn-primary" href="@Model.HtmlUrls[i]">Original Site</a>
+                            @{
                         if (Request.Cookies["Favourites"] is not null)
                         {
                             List<Feed> currentFavourites = JsonSerializer.Deserialize<List<Feed>>(Request.Cookies["Favourites"]);
                             Feed currentFeed = currentFavourites.Find(x => x.XmlUrl == Model.XmlUrls[i] && x.HtmlUrl == Model.HtmlUrls[i] && x.FeedTitle == Model.FeedTitles[i]);
                             if(currentFeed is null)
                             {
-                                <form method="post">
-                                    <button type="submit" class="btn btn-warning" asp-page-handler="Star" asp-route-xmlUrl="@Model.XmlUrls[i]" asp-route-htmlUrl="@Model.HtmlUrls[i]" asp-route-feedTitle="@Model.FeedTitles[i]" asp-route-pageIndex="@Model.PageIndex">Star</button>
-                                </form>
+                                                <form>
+                                                    <button type="button" class="btn btn-warning" onclick="sendRequest('@Model.XmlUrls[i]', '@Model.HtmlUrls[i]', '@Model.FeedTitles[i]', this)">Star</button>
+                                                </form>
                             }
                             else
                             {
-                                <form method="post">
-                                    <button type="submit" class="btn btn-danger" asp-page-handler="DeleteStar" asp-route-xmlUrl="@Model.XmlUrls[i]" asp-route-htmlUrl="@Model.HtmlUrls[i]" asp-route-feedTitle="@Model.FeedTitles[i]" asp-route-pageIndex="@Model.PageIndex">Unstar</button>
-                                </form>
+                                                <form>
+                                                    <button type="button" class="btn btn-danger" onclick="deleteStar('@Model.XmlUrls[i]', '@Model.HtmlUrls[i]', '@Model.FeedTitles[i]', this)">Unstar</button>
+                                                </form>
                             }
                         }
                         else
                         {
-                            <form method="post">
-                                <button type="submit" class="btn btn-warning" asp-page-handler="Star" asp-route-xmlUrl="@Model.XmlUrls[i]" asp-route-htmlUrl="@Model.HtmlUrls[i]" asp-route-feedTitle="@Model.FeedTitles[i]" asp-route-pageIndex="@Model.PageIndex">Star</button>
-                            </form>
+                                            <form>
+                                                <button type="button" class="btn btn-warning" onclick="sendRequest('@Model.XmlUrls[i]', '@Model.HtmlUrls[i]', '@Model.FeedTitles[i]', this)">Star</button>
+                                            </form>
                         }
-                    }
-                    
-                    
-                </div>
-            </section>
+                            }
+                            
+                            
+                        </div>
+                    </section>
         }
-        <nav aria-label="navigation-links">
-            <ul class="pagination">
-                <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
-                    <a class="page-link" href="@Url.Page("Index", new {pageIndex = Model.PageIndex - 1 })">Previous</a>
-                </li>
-                @for (int i = 1; i <= Model.TotalPages; i++)
+                <nav aria-label="navigation-links">
+                    <ul class="pagination">
+                        <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
+                            <a class="page-link" href="@Url.Page("Index", new {pageIndex = Model.PageIndex - 1 })">Previous</a>
+                        </li>
+                        @for (int i = 1; i <= Model.TotalPages; i++)
                 {
-                    <li class="page-item @(Model.PageIndex == i ? "active" : "")">
-                        <a class="page-link" href="@Url.Page("Index", new { pageIndex = i })">@i</a>
-                    </li>
+                            <li class="page-item @(Model.PageIndex == i ? "active" : "")">
+                                <a class="page-link" href="@Url.Page("Index", new { pageIndex = i })">@i</a>
+                            </li>
                 }
-                <li class="page-item">
-                    <a class="page-link @(Model.PageIndex == Model.XmlUrls.Count + 1 ? "disabled" : "")" href="@Url.Page("Index", new { pageIndex = Model.PageIndex + 1})">Next</a>
-                </li>
-            </ul>
-        </nav>
+                        <li class="page-item">
+                            <a class="page-link @(Model.PageIndex == Model.XmlUrls.Count + 1 ? "disabled" : "")" href="@Url.Page("Index", new { pageIndex = Model.PageIndex + 1})">Next</a>
+                        </li>
+                    </ul>
+                </nav>
      }
       
 </div>
 
+
+
+<script>
+    async function sendRequest(xmlUrl, htmlUrl, feedTitle, button) {
+        const url = '@Url.Page("Index", "Star")';
+        const data = {
+            xmlUrl: xmlUrl,
+            htmlUrl: htmlUrl,
+            feedTitle: feedTitle
+        };
+        var options = {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                RequestVerificationToken:
+                    $('input:hidden[name="__RequestVerificationToken"]').val(),
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        };
+        try {
+            var response = await fetch(url, options);
+            if (response.ok) {
+                console.log('Request succeeded');
+                button.classList.remove('btn-warning');
+                button.classList.add('btn-danger');
+                button.onclick = function () { deleteStar(xmlUrl, htmlUrl, feedTitle, button) };
+                button.innerHTML = 'Unstar';
+            } else {
+                console.error('Request failed');
+            }
+        }
+        catch (error) {
+            console.log(error);
+        }
+    }
+
+    async function deleteStar(xmlUrl, htmlUrl, feedTitle, button) {
+        const url = '@Url.Page("Index", "DeleteStar")';
+        const data = {
+            xmlUrl: xmlUrl,
+            htmlUrl: htmlUrl,
+            feedTitle: feedTitle
+        };
+        var options = {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                RequestVerificationToken:
+                    $('input:hidden[name="__RequestVerificationToken"]').val(),
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        };
+        try {
+            var response = await fetch(url, options);
+            if (response.ok) {
+                console.log('Request succeeded');
+                button.classList.remove('btn-danger');
+                button.classList.add('btn-warning');
+                button.onclick = function () { sendRequest(xmlUrl, htmlUrl, feedTitle, button) };
+                button.innerHTML = 'Star';
+            } else {
+                console.error('Request failed');
+            }
+        }
+        catch (error) {
+            console.log(error);
+        }
+    }
+</script>

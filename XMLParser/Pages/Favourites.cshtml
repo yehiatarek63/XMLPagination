@@ -1,5 +1,6 @@
 ﻿@page
 @model XMLParser.Pages.FavouritesModel
+@Html.AntiForgeryToken()
 @{
 
     foreach (var feed in Model.AllFavourites)
@@ -9,11 +10,44 @@
             <div class="buttons">
                 <a class="btn btn-success" asp-page="Feed" asp-route-xmlUrl="@feed.XmlUrl">Feed Info</a>
                 <a class="btn btn-primary" href="@feed.HtmlUrl">Original Site</a>
-                <form method="post">
-                    <button type="submit" class="btn btn-danger" asp-page-handler="DeleteStar" asp-route-xmlUrl="@feed.XmlUrl" asp-route-htmlUrl="@feed.HtmlUrl" asp-route-feedTitle="@feed.FeedTitle">Unstar</button>
+                <form>
+                    <button type="button" class="btn btn-danger" onclick="deleteStar('@feed.XmlUrl', '@feed.HtmlUrl', '@feed.FeedTitle', this)">Unstar</button>
                 </form>
             </div>
         </section>
     }
 
 }
+<script>
+    async function deleteStar(xmlUrl, htmlUrl, feedTitle, button) {
+        const url = '@Url.Page("Index", "DeleteStar")';
+        const data = {
+            xmlUrl: xmlUrl,
+            htmlUrl: htmlUrl,
+            feedTitle: feedTitle
+        };
+        var section = button.closest('section');
+        var options = {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                RequestVerificationToken:
+                    $('input:hidden[name="__RequestVerificationToken"]').val(),
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        };
+        try {
+            var response = await fetch(url, options);
+            if (response.ok) {
+                console.log('Request succeeded')
+                section.remove();
+            } else {
+                console.error('Request failed');
+            }
+        }
+        catch (error) {
+            console.log(error);
+        }
+    }
+</script>

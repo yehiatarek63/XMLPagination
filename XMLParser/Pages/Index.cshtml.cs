@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Reflection;
 using System.Security;
@@ -8,6 +9,7 @@ using System.Xml.Linq;
 using System.Text.Json;
 using System.Net.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.Hosting;
 
 namespace XMLParser.Pages;
 
@@ -46,44 +48,42 @@ public class IndexModel : PageModel
         HtmlUrls = HtmlUrls.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
     }
     
-    public IActionResult OnPostStar(string xmlUrl, string htmlUrl, string feedTitle, int pageIndex)
+    public IActionResult OnPostStar([FromBody] Feed newFeed)
     {
         if (Request.Cookies["Favourites"] is null)
         {
-            Response.Cookies.Append("Favourites", JsonSerializer.Serialize(new List<Feed> { new Feed { XmlUrl = xmlUrl, HtmlUrl = htmlUrl, FeedTitle = feedTitle } }), new CookieOptions
+            Response.Cookies.Append("Favourites", JsonSerializer.Serialize(new List<Feed> { new Feed { XmlUrl = newFeed.XmlUrl, HtmlUrl = newFeed.HtmlUrl, FeedTitle = newFeed.FeedTitle } }), new CookieOptions
             {
                 Secure = true,
             });
-            return RedirectToPage("Index", new { PageIndex = pageIndex });
+            return new OkResult();
         }
         List<Feed> currentFavourites = JsonSerializer.Deserialize<List<Feed>>(Request.Cookies["Favourites"]);
-        Feed newFeed = new Feed
-        {
-            XmlUrl = xmlUrl,
-            HtmlUrl = htmlUrl,
-            FeedTitle = feedTitle
-        };
         currentFavourites.Add(newFeed);
         Response.Cookies.Append("Favourites", JsonSerializer.Serialize(currentFavourites), new CookieOptions
         {
             Secure = true,
         });
-        return RedirectToPage("Index", new { PageIndex = pageIndex });
+        return new OkResult();
     }
 
-    public IActionResult OnPostDeleteStar(string xmlUrl, string htmlUrl, string feedTitle, int pageIndex)
+    public IActionResult OnPostDeleteStar([FromBody] Feed deleteFeed)
     {
         List<Feed> currentFavourites = JsonSerializer.Deserialize<List<Feed>>(Request.Cookies["Favourites"]);
-        Feed currentFeed = currentFavourites.Find(x => x.XmlUrl == xmlUrl && x.HtmlUrl == htmlUrl && x.FeedTitle == feedTitle);
-        if(currentFeed is not null)
+        Feed foundFeed = currentFavourites.Find(feed =>
+            feed.XmlUrl == deleteFeed.XmlUrl &&
+            feed.HtmlUrl == deleteFeed.HtmlUrl &&
+             feed.FeedTitle == deleteFeed.FeedTitle);
+        if (foundFeed is not null)
         {
-            currentFavourites.Remove(currentFeed);
+            currentFavourites.Remove(foundFeed);
             Response.Cookies.Append("Favourites", JsonSerializer.Serialize(currentFavourites), new CookieOptions
             {
                 Secure = true,
             });
+            return new OkResult();
         }
-        return RedirectToPage("Index", new {PageIndex = pageIndex});
+        return new BadRequestResult();
     }
 
     async Task<(List<string>, List<string>, List<string>)> GetOutline(HttpClient client, string url)

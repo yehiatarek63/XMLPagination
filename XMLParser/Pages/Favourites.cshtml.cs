@@ -17,19 +17,23 @@ public class FavouritesModel : PageModel
         }
     }
 
-    public IActionResult OnPostDeleteStar(string xmlUrl, string htmlUrl, string feedTitle)
+    public IActionResult OnPostDeleteStar([FromBody] Feed deleteFeed)
     {
         List<Feed> currentFavourites = JsonSerializer.Deserialize<List<Feed>>(Request.Cookies["Favourites"]);
-        Feed currentFeed = currentFavourites.Find(x => x.XmlUrl == xmlUrl && x.HtmlUrl == htmlUrl && x.FeedTitle == feedTitle);
-        if (currentFeed is not null)
+        Feed foundFeed = currentFavourites.Find(feed =>
+            feed.XmlUrl == deleteFeed.XmlUrl &&
+            feed.HtmlUrl == deleteFeed.HtmlUrl &&
+             feed.FeedTitle == deleteFeed.FeedTitle);
+        if (foundFeed is not null)
         {
-            currentFavourites.Remove(currentFeed);
+            currentFavourites.Remove(foundFeed);
             Response.Cookies.Append("Favourites", JsonSerializer.Serialize(currentFavourites), new CookieOptions
             {
                 Secure = true,
             });
+            return new OkResult();
         }
-        return RedirectToPage("Favourites");
+        return new BadRequestResult();
     }
 }
 
