@@ -68,7 +68,7 @@
 
 <script>
     async function sendRequest(xmlUrl, htmlUrl, feedTitle, button) {
-        const url = '@Url.Page("Index", "Star")';
+        const url = '/post-fav';
         const data = {
             xmlUrl: xmlUrl,
             htmlUrl: htmlUrl,
@@ -102,7 +102,7 @@
     }
 
     async function deleteStar(xmlUrl, htmlUrl, feedTitle, button) {
-        const url = '@Url.Page("Index", "DeleteStar")';
+        const url = '/remove-fav';
         const data = {
             xmlUrl: xmlUrl,
             htmlUrl: htmlUrl,

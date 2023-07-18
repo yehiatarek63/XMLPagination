@@ -47,44 +47,6 @@ public class IndexModel : PageModel
         FeedTitles = FeedTitles.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
         HtmlUrls = HtmlUrls.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
     }
-    
-    public IActionResult OnPostStar([FromBody] Feed newFeed)
-    {
-        if (Request.Cookies["Favourites"] is null)
-        {
-            Response.Cookies.Append("Favourites", JsonSerializer.Serialize(new List<Feed> { new Feed { XmlUrl = newFeed.XmlUrl, HtmlUrl = newFeed.HtmlUrl, FeedTitle = newFeed.FeedTitle } }), new CookieOptions
-            {
-                Secure = true,
-            });
-            return new OkResult();
-        }
-        List<Feed> currentFavourites = JsonSerializer.Deserialize<List<Feed>>(Request.Cookies["Favourites"]);
-        currentFavourites.Add(newFeed);
-        Response.Cookies.Append("Favourites", JsonSerializer.Serialize(currentFavourites), new CookieOptions
-        {
-            Secure = true,
-        });
-        return new OkResult();
-    }
-
-    public IActionResult OnPostDeleteStar([FromBody] Feed deleteFeed)
-    {
-        List<Feed> currentFavourites = JsonSerializer.Deserialize<List<Feed>>(Request.Cookies["Favourites"]);
-        Feed foundFeed = currentFavourites.Find(feed =>
-            feed.XmlUrl == deleteFeed.XmlUrl &&
-            feed.HtmlUrl == deleteFeed.HtmlUrl &&
-             feed.FeedTitle == deleteFeed.FeedTitle);
-        if (foundFeed is not null)
-        {
-            currentFavourites.Remove(foundFeed);
-            Response.Cookies.Append("Favourites", JsonSerializer.Serialize(currentFavourites), new CookieOptions
-            {
-                Secure = true,
-            });
-            return new OkResult();
-        }
-        return new BadRequestResult();
-    }
 
     async Task<(List<string>, List<string>, List<string>)> GetOutline(HttpClient client, string url)
     {
