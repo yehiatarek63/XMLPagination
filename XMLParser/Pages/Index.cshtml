@@ -67,6 +67,24 @@
 
 
 <script>
+    async function getToken() {
+        const response = await fetch("/antiforgery", {
+            method: "GET",
+            credentials: 'include'
+        });
+
+        if (response.ok) {
+            const xsrfToken = document.cookie
+                .split("; ")
+                .find(row => row.startsWith("XSRF-TOKEN="))
+                .split("=")[1];
+
+            return xsrfToken;
+        }
+        else {
+            return null;
+        }
+    }
     async function sendRequest(xmlUrl, htmlUrl, feedTitle, button) {
         const url = '/post-fav';
         const data = {
@@ -74,12 +92,12 @@
             htmlUrl: htmlUrl,
             feedTitle: feedTitle
         };
+        var antiforgery = await getToken();
         var options = {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
-                RequestVerificationToken:
-                    $('input:hidden[name="__RequestVerificationToken"]').val(),
+                "X-XSRF-TOKEN": antiforgery,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify(data)
@@ -108,12 +126,12 @@
             htmlUrl: htmlUrl,
             feedTitle: feedTitle
         };
+        var antiforgery = await getToken();
         var options = {
-            method: 'POST',
+            method: 'DELETE',
             headers: {
                 'Accept': 'application/json',
-                RequestVerificationToken:
-                    $('input:hidden[name="__RequestVerificationToken"]').val(),
+                "X-XSRF-TOKEN": antiforgery,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify(data)

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using XMLParser.Pages;
@@ -7,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddHttpClient();
+builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 var app = builder.Build();
 
 app.MapPost("/post-fav",  (HttpContext context, [FromBody] Feed newFeed) =>
@@ -28,7 +30,7 @@ app.MapPost("/post-fav",  (HttpContext context, [FromBody] Feed newFeed) =>
     return Results.Ok();
 });
 
-app.MapPost("/remove-fav", (HttpContext context, [FromBody] Feed deleteFeed) =>
+app.MapDelete("/remove-fav", (HttpContext context, [FromBody] Feed deleteFeed) =>
 {
     List<Feed> currentFavourites = JsonSerializer.Deserialize<List<Feed>>(context.Request.Cookies["Favourites"]);
     Feed foundFeed = currentFavourites.Find(feed =>
@@ -45,6 +47,12 @@ app.MapPost("/remove-fav", (HttpContext context, [FromBody] Feed deleteFeed) =>
         return Results.Ok();
     }
     return Results.BadRequest();
+});
+
+app.MapGet("/antiforgery", (IAntiforgery antiforgery, HttpContext context) =>
+{
+    var tokens = antiforgery.GetAndStoreTokens(context);
+    context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!, new CookieOptions { HttpOnly = false });
 });
 
 // Configure the HTTP request pipeline.
